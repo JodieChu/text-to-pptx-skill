@@ -32,6 +32,7 @@ mkdir -p ~/ai_projects/ppt-<主题> && cd ~/ai_projects/ppt-<主题>
 npm init -y >/dev/null 2>&1
 npm install pptxgenjs >/dev/null 2>&1
 cp ~/.claude/skills/text-to-pptx/assets/pptx_design.js .
+cp ~/.claude/skills/text-to-pptx/assets/image_search.js .   # 需要自动配图时
 ```
 （项目一律放 `~/ai_projects/`，见全局 CLAUDE.md。）
 
@@ -69,8 +70,22 @@ await pres.writeFile({ fileName:"主题.pptx" });
 版式库提供的积木（详见 `assets/pptx_design.js` 顶部注释与每个函数签名）：
 - `titleSlide` 封面 · `closingSlide` 结尾来源页
 - `header`/`headerDark` 页眉 · `footer`+`pageNum` 页脚页码
-- `cardGrid` 2×2 编号卡片 · `statCallouts` 4 个大数字 · `processFlow` 4 步流程 · `takeawayRows` 编号要点行 · `chip` 小标签
+- `cardGrid` 2×2 编号卡片 · `statCallouts` 4 个大数字 · `processFlow` 4 步流程 · `takeawayRows` 编号要点行 · `dataTable` 数据表格 · `chip` 小标签
+- **配图**（借鉴 ppt-master，配合 `image_search.js`）：`titleSlide({bgImage})` 封面背景图 · `heroSplit` 半图大图页 · `imageRow` 图卡行 · `imageBox` 任意位置放图（含占位兜底）· `imageCredits` 来源合规标注
 - 7 套风格调色板（见「三、风格与触发」），`accentA / accentB` 两个强调色天然适合「两个对象对比」。
+
+**自动配图用法**（按关键词抓免费图片，失败自动降级占位框）：
+```js
+const IS = require("./image_search");
+const img = await IS.searchImage("人工智能 芯片", { orient:"landscape" });  // 返回 {path,source,license,...} 或 null
+D.titleSlide(pres, C, { bgImage: img, /* ... */ });           // 封面铺底
+D.heroSplit(pres, C, { img, side:"right", title:"…", bullets:[…] });
+D.imageRow(pres, s, C, [{img, title:"…", caption:"…"}, …]);
+```
+- 默认图源 **Wikimedia Commons**（关键词、免 key、直连、CC/公共领域、带署名）——你的网络实测直连可达。
+- 想要更漂亮的图库照片：设环境变量 `PEXELS_KEY`（或 `PIXABAY_KEY`），并传 `{source:"best"}`，会优先用 Pexels/Pixabay。
+- Openverse 源需走代理（模块会自动用 `127.0.0.1:7890` 或 `TTP_PROXY`/`HTTPS_PROXY`）。
+- 图片缓存在 `~/ai_projects/.tools-cache/img-cache/`，重复关键词不重抓。CC 图记得用 `imageCredits` 标注来源。
 
 设计纪律（避免 AI 味）：标题 27pt 加粗、正文 12–13pt；**不在标题下加装饰线**；卡片留白足；一种强调色主导。中文字体用 `PingFang SC`（库已内置）。
 

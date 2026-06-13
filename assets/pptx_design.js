@@ -123,6 +123,11 @@ function chip(pres, s, C, x, y, w, txt, fg, bg){
 // opts: { kicker, titleParts:[{text,color,bold}], subtitle, descLines:[..], meta }
 function titleSlide(pres, C, opts){
   const s = pres.addSlide(); bgDark(s, C);
+  // 可选封面背景图：整幅铺底 + 深色蒙版（保证文字可读）
+  if (opts.bgImage && opts.bgImage.path){
+    s.addImage({ path:opts.bgImage.path, x:0, y:0, w:W, h:H, sizing:{type:"cover", w:W, h:H} });
+    s.addShape(pres.shapes.RECTANGLE, { x:0, y:0, w:W, h:H, fill:{color:C.navy, transparency: opts.scrim!=null?opts.scrim:32} });
+  }
   s.addShape(pres.shapes.RECTANGLE, { x:0, y:0, w:0.28, h:H, fill:{color:C.accentA} });
   s.addShape(pres.shapes.RECTANGLE, { x:0.28, y:0, w:0.16, h:H, fill:{color:C.accentB} });
   if (opts.kicker) s.addText(opts.kicker, { x:1.1, y:1.35, w:10, h:0.4, fontFace:FONT, fontSize:15, color:C.onDarkFaint, bold:true, charSpacing:3, margin:0 });
@@ -214,6 +219,66 @@ function closingSlide(pres, C, opts){
   return s;
 }
 
+// ====================== 配图相关（配合 image_search.js）======================
+// img 对象 = image_search.searchImage() 的返回（{path, source, ...}）或 null（自动画占位框）。
+
+// 在指定矩形里放一张图（cover 裁切填满），可选右下角来源署名。img 为 null 时画占位框。
+function imageBox(pres, s, C, img, o){
+  const { x, y, w, h } = o;
+  if (img && img.path){
+    s.addImage({ path: img.path, x, y, w, h, sizing:{ type:"cover", w, h } });
+    if (o.credit){
+      s.addShape(pres.shapes.RECTANGLE, { x, y:y+h-0.26, w, h:0.26, fill:{color:"000000", transparency:45} });
+      s.addText("图：" + (img.source||""), { x:x+0.08, y:y+h-0.26, w:w-0.16, h:0.26, fontFace:FONT, fontSize:8, color:"FFFFFF", align:"right", valign:"middle", margin:0 });
+    }
+  } else {
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w, h, fill:{color:C.aBg}, line:{color:C.line, width:1}, rectRadius:0.05 });
+    s.addText(o.placeholder || "（配图）", { x, y, w, h, fontFace:FONT, fontSize:13, color:C.muted, align:"center", valign:"middle", margin:0 });
+  }
+}
+
+// 半图大图页（一侧整幅图，另一侧文案）。自带 slide。dark=true 文案用深色底。
+// o: { img, side:"right"|"left", kicker, title, body, bullets:[], accent, dark }
+function heroSplit(pres, C, o){
+  const s = pres.addSlide();
+  const imgW = 5.6, side = o.side || "right", accent = o.accent || C.accentA, dark = !!o.dark;
+  dark ? bgDark(s, C) : bgPaper(s, C);
+  const imgX = side === "right" ? (W - imgW) : 0;
+  imageBox(pres, s, C, o.img, { x:imgX, y:0, w:imgW, h:H, credit:true });
+  const cx = side === "right" ? 0.7 : (imgW + 0.7), cw = W - imgW - 1.4;
+  const tcol = dark ? C.white : C.ink, bcol = dark ? C.onDarkMuted : C.body;
+  s.addShape(pres.shapes.RECTANGLE, { x:cx, y:1.5, w:0.16, h:0.62, fill:{color:accent} });
+  if (o.kicker) s.addText(o.kicker, { x:cx+0.3, y:1.46, w:cw-0.3, h:0.3, fontFace:FONT, fontSize:12.5, color:accent, bold:true, charSpacing:2, margin:0 });
+  s.addText(o.title, { x:cx+0.28, y:1.78, w:cw, h:1.2, fontFace:FONT, fontSize:30, color:tcol, bold:true, lineSpacingMultiple:1.1, margin:0 });
+  let ny = 3.2;
+  if (o.body){ s.addText(o.body, { x:cx+0.28, y:ny, w:cw, h:1.2, fontFace:FONT, fontSize:14.5, color:bcol, lineSpacingMultiple:1.35, valign:"top", margin:0 }); ny += 1.4; }
+  if (o.bullets && o.bullets.length){
+    s.addText(o.bullets.map((t,i)=>({ text:t, options:{ bullet:{code:"2022"}, color:bcol, breakLine:true, paraSpaceAfter:7 } })),
+      { x:cx+0.28, y:ny, w:cw, h:H-ny-1.0, fontFace:FONT, fontSize:13.5, lineSpacingMultiple:1.25, valign:"top", margin:0 });
+  }
+  return s;
+}
+
+// 图卡行（2–3 张：图在上 + 标题 + 说明）。items:[{img,title,caption}]
+function imageRow(pres, s, C, items, opts){
+  opts = opts || {};
+  const n = Math.min(items.length, 3), x0 = 0.65, gap = 0.4, y = opts.y || 1.95;
+  const cw = (12.0 - gap*(n-1)) / n, imgH = 2.5;
+  items.slice(0,n).forEach((it, i) => {
+    const cx = x0 + i*(cw+gap);
+    imageBox(pres, s, C, it.img, { x:cx, y, w:cw, h:imgH, credit:true });
+    s.addText(it.title, { x:cx, y:y+imgH+0.18, w:cw, h:0.45, fontFace:FONT, fontSize:16, color:C.ink, bold:true, valign:"top", margin:0 });
+    if (it.caption) s.addText(it.caption, { x:cx, y:y+imgH+0.66, w:cw, h:1.3, fontFace:FONT, fontSize:12, color:C.body, lineSpacingMultiple:1.25, valign:"top", margin:0 });
+  });
+}
+
+// 幻灯片级图片来源汇总（CC 合规用）：底部一行小字
+function imageCredits(pres, s, C, imgs){
+  const list = imgs.filter(Boolean).map(im => `${im.source}${im.license?("／"+im.license):""}`);
+  if (!list.length) return;
+  s.addText("图片来源：" + [...new Set(list)].join(" · "), { x:0.6, y:H-0.34, w:12.1, h:0.26, fontFace:FONT, fontSize:8, color:C.muted, margin:0 });
+}
+
 // ---------- 数据表格（表头着色 + 斑马纹）----------
 // opts: { x, y, w, headers:[], rows:[[]], colW:[], fontSize, headerFontSize, accent, zebra, colAlign:[], rowH, align }
 // 行数多时把 fontSize 调到 9.5–10。colW 之和需等于 w。
@@ -237,4 +302,5 @@ function dataTable(pres, s, C, opts){
 }
 
 module.exports = { W, H, FONT, palette, listStyles, shadow, sh, bgPaper, bgDark, pageNum, footer,
-  header, headerDark, chip, titleSlide, cardGrid, statCallouts, processFlow, takeawayRows, dataTable, closingSlide };
+  header, headerDark, chip, titleSlide, cardGrid, statCallouts, processFlow, takeawayRows, dataTable,
+  imageBox, heroSplit, imageRow, imageCredits, closingSlide };
