@@ -87,6 +87,17 @@ D.imageRow(pres, s, C, [{img, title:"…", caption:"…"}, …]);
 - Openverse 源需走代理（模块会自动用 `127.0.0.1:7890` 或 `TTP_PROXY`/`HTTPS_PROXY`）。
 - 图片缓存在 `~/ai_projects/.tools-cache/img-cache/`，重复关键词不重抓。CC 图记得用 `imageCredits` 标注来源。
 
+**模板填充（用你自己的 .pptx 模板，借鉴 ppt-master）** — `assets/template_fill.py`（python-pptx）
+当 Jodie 要「按机构/公司标准模板出片」时用：把内容填进一份**真实 .pptx 模板**，外观（母版/Logo/配色/字体）完全沿用模板，只换内容。
+- 模板里标占位符（标一次，长期复用）：
+  - 文本：任意文本框/单元格写 `{{key}}` → 被 `content["key"]` 替换（**保留原格式**）。
+  - 重复表格行：模板表格的「模板行」首格写 `{{#each LISTKEY}}`，其余格用列名 `{{name}}`/`{{amount}}` → 按 `content["LISTKEY"]`（dict 列表）逐条克隆填充。
+  - 图片：给模板图片设「替代文字 alt text」为 `{{img:KEY}}` → 用 `content["img"][KEY]`（本地图片路径，可来自 image_search）替换，保持原位置尺寸。
+- 用法：`/usr/bin/python3 ~/.claude/skills/text-to-pptx/assets/template_fill.py 模板.pptx 内容.json -o 输出.pptx`
+- 校验：填充后 grep `{{` 应无残留；表格行数 = 1 表头 + N 数据。再用 `qa_render.sh` 出图核对版式未被破坏。
+- 何时用「模板填充」vs「7 套风格代码生成」：有指定模板/品牌要求 → 模板填充；从零做、要好看排版 → 代码生成（`pptx_design.js`）。两者可混用（代码生成的图当 `{{img}}` 填进模板）。
+- 示例模板见 `examples/sample_template.pptx` + `examples/content.json`。
+
 设计纪律（避免 AI 味）：标题 27pt 加粗、正文 12–13pt；**不在标题下加装饰线**；卡片留白足；一种强调色主导。中文字体用 `PingFang SC`（库已内置）。
 
 ### 步骤 4 · 【必做】视觉 QA — 零试错出图

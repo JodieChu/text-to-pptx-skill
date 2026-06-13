@@ -8,6 +8,7 @@
   `executive`（商务汇报）、`tech`（科技）、`electric`（高科技/未来/AI）、`minimal`（极简，无阴影发丝线）、`premium`（高智感/编辑感）、`mono`（高级灰）、`scholar`（学术）。
 - **可复用版式积木**（`assets/pptx_design.js`）：封面 / 结尾、页眉页脚、2×2 编号卡片、大数字 callout、四步流程条、编号要点行、**数据表格 `dataTable`**（表头着色 + 斑马纹 + 数字右对齐）、小标签 chip。
 - **自动配图**（`assets/image_search.js`，借鉴 [ppt-master](https://github.com/hugohe3/ppt-master) 的 image_search）：按关键词抓免费图片并排版——封面背景图 `titleSlide({bgImage})`、半图大图 `heroSplit`、图卡行 `imageRow`，抓不到自动降级占位框，CC 图自动署名。默认图源 Wikimedia（免 key 直连），可选 Pexels/Pixabay（设 `PEXELS_KEY`/`PIXABAY_KEY`）/Openverse。
+- **模板填充**（`assets/template_fill.py`，python-pptx，借鉴 ppt-master）：把内容填进**你自己的 .pptx 模板**，外观（母版/Logo/配色/字体）完全沿用——文本 `{{key}}`、可重复表格行 `{{#each LIST}}`、图片占位 `{{img:KEY}}`。适合「按机构/公司标准模板出片」。示例见 `examples/`。
 - **零试错视觉 QA**（`scripts/qa_render.sh`）：把 pptx 转成逐页 JPG 供肉眼/子 agent 检查溢出与碰撞。
 
 ## 文件
@@ -17,6 +18,8 @@
 | `SKILL.md` | 技能说明书：触发场景、5 步标准流程、7 套风格与触发词、渲染环境 |
 | `assets/pptx_design.js` | 可复用版式库（调色板 + 所有版式函数，含 `dataTable` 表格与配图函数） |
 | `assets/image_search.js` | 按关键词抓免费图片（Wikimedia/Pexels/Pixabay/Openverse/Picsum），仅用 Node 内置 + curl |
+| `assets/template_fill.py` | 把内容填进你自己的 .pptx 模板（python-pptx）：文本/重复表格行/图片占位 |
+| `examples/` | 模板填充示例：`sample_template.pptx` + `content.json` + 生成脚本 |
 | `scripts/qa_render.sh` | pptx → 逐页图，做视觉 QA |
 
 ## 安装（Claude Code）

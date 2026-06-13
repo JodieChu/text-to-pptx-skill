@@ -1,0 +1,40 @@
+{
+  "title": "复旦科创 2026 中期回顾",
+  "subtitle": "Pipeline 投资分析 · 模板填充测试",
+  "table_title": "硬科技赛道 Pipeline 明细",
+  "projects": [
+    {
+      "name": "清纯半导体",
+      "sector": "半导体",
+      "amount": "3,000",
+      "status": "预立项"
+    },
+    {
+      "name": "鹿明机器人",
+      "sector": "具身智能",
+      "amount": "2,000",
+      "status": "协议签署"
+    },
+    {
+      "name": "正元量子",
+      "sector": "量子技术",
+      "amount": "1,000",
+      "status": "预立项"
+    },
+    {
+      "name": "昇阳智算",
+      "sector": "AI 芯片",
+      "amount": "3,000",
+      "status": "待预审"
+    },
+    {
+      "name": "和创能源",
+      "sector": "新能源",
+      "amount": "2,500",
+      "status": "协议签署"
+    }
+  ],
+  "img": {
+    "cover": "(可选)本地图片路径，或用 image_search 抓取后填入"
+  }
+}
